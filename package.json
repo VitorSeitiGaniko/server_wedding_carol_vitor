@@ -1,0 +1,20 @@
+{
+  "scripts": {
+    "dev": "tsx watch index.ts",
+    "start": "tsx index.ts"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mercadopago": "^3.1.0",
+    "tsx": "^4.23.13",
+    "typescript": "^6.0.3"
+  },
+  "devDependencies": {
+    "@flydotio/dockerfile": "^0.7.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.9.1"
+  }
+}

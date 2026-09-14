@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { MercadoPagoConfig, Preference } from 'mercadopago';
+import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 
 dotenv.config();
 
@@ -60,7 +60,7 @@ app.post('/api/create-preference', async (req, res) => {
           failure: `${frontendUrl}/falha`,
           pending: `${frontendUrl}/pendente`,
         },
-        // auto_return omitido: exige domínio https real e alcançável, senão a API do Mercado Pago rejeita a preferência
+        auto_return: 'approved', // omitido: exige domínio https real e alcançável, senão a API do Mercado Pago rejeita a preferência
       },
     });
 
@@ -72,6 +72,38 @@ app.post('/api/create-preference', async (req, res) => {
   } catch (error) {
     console.error('Erro ao criar preferência Mercado Pago:', error);
     return res.status(500).json({ error: 'Erro ao processar pagamento com Mercado Pago' });
+  }
+});
+
+app.get('/api/get-payment-status', async (req, res) => {
+  console.log('Get payment status endpoint called');
+  const { payment_id } = req.query;
+
+  if (!payment_id || typeof payment_id !== 'string') {
+    return res.status(400).json({ error: 'payment_id não foi fornecido' });
+  }
+
+  const accessToken = process.env.MP_ACCESS_TOKEN;
+  if (!accessToken) {
+    console.error('MP_ACCESS_TOKEN não configurado nas variáveis de ambiente.');
+    return res
+      .status(500)
+      .json({ error: 'Configuração do servidor incompleta (token Mercado Pago ausente)' });
+  }
+
+  try {
+    const client = new MercadoPagoConfig({ accessToken });
+
+    const payment = await new Payment(client).get({ id: payment_id });
+
+    return res.json({
+      id: payment.id,
+      status: payment.status,
+      status_detail: payment.status_detail,
+    });
+  } catch (error) {
+    console.error('Erro ao obter status do pagamento Mercado Pago:', error);
+    return res.status(500).json({ error: 'Erro ao obter status do pagamento com Mercado Pago' });
   }
 });
 

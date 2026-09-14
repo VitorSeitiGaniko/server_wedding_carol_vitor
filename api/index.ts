@@ -51,23 +51,30 @@ app.post('/api/create-preference', async (req, res) => {
   try {
     const client = new MercadoPagoConfig({ accessToken });
 
-    // Obtém a URL do frontend (prioriza a variável de ambiente, depois a origem da requisição, e por fim localhost)
+    // Obtém a URL do frontend
     let frontendUrl = process.env.FRONTEND_URL || (req.headers.origin as string) || 'http://localhost:5173';
 
-    // Se não tiver protocolo (ex: meu-site.vercel.app), adiciona https://
     if (!frontendUrl.startsWith('http://') && !frontendUrl.startsWith('https://')) {
       frontendUrl = `https://${frontendUrl}`;
     }
 
-    // Remove barra no final, se houver
     frontendUrl = frontendUrl.replace(/\/$/, '');
 
-    const successUrl = `${frontendUrl}/sucesso`;
-    const failureUrl = `${frontendUrl}/falha`;
-    const pendingUrl = `${frontendUrl}/pendente`;
+    // Mercado Pago exige obrigatoriamente auto_return: 'approved' e que back_urls.success seja uma URL HTTPS pública.
+    // Se estiver chamando do localhost em desenvolvimento, usamos um fallback HTTPS para a validação da API do Mercado Pago passar.
+    const isLocalhost = frontendUrl.includes('localhost') || frontendUrl.includes('127.0.0.1');
+    const publicFrontendUrl = isLocalhost
+      ? process.env.FRONTEND_URL && !process.env.FRONTEND_URL.includes('localhost')
+        ? process.env.FRONTEND_URL
+        : 'https://wedding-carol-vitor.vercel.app'
+      : frontendUrl;
 
-    console.log('FRONTEND_URL em uso:', frontendUrl);
-    console.log('URLs de retorno configuradas:', { successUrl, failureUrl, pendingUrl });
+    const successUrl = `${publicFrontendUrl}/sucesso`;
+    const failureUrl = `${publicFrontendUrl}/falha`;
+    const pendingUrl = `${publicFrontendUrl}/pendente`;
+
+    console.log('FRONTEND_URL detectada:', frontendUrl);
+    console.log('URLs de retorno enviadas ao Mercado Pago:', { successUrl, failureUrl, pendingUrl });
 
     const preference = await new Preference(client).create({
       body: {
@@ -77,6 +84,7 @@ app.post('/api/create-preference', async (req, res) => {
           failure: failureUrl,
           pending: pendingUrl,
         },
+        auto_return: 'approved',
       },
     });
 

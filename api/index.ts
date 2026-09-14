@@ -9,7 +9,10 @@ const app = express();
 
 app.use(express.json());
 
-const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000', process.env.FRONTEND_URL].filter(
+// O header Origin do navegador nunca inclui path, então extraímos só scheme+host de FRONTEND_URL.
+const frontendOrigin = process.env.FRONTEND_URL ? new URL(process.env.FRONTEND_URL).origin : undefined;
+
+const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000', frontendOrigin].filter(
   Boolean,
 ) as string[];
 

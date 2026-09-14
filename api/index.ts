@@ -60,20 +60,10 @@ app.post('/api/create-preference', async (req, res) => {
 
     frontendUrl = frontendUrl.replace(/\/$/, '');
 
-    // Mercado Pago exige obrigatoriamente auto_return: 'approved' e que back_urls.success seja uma URL HTTPS pública.
-    // Se estiver chamando do localhost em desenvolvimento, usamos um fallback HTTPS para a validação da API do Mercado Pago passar.
-    const isLocalhost = frontendUrl.includes('localhost') || frontendUrl.includes('127.0.0.1');
-    const publicFrontendUrl = isLocalhost
-      ? process.env.FRONTEND_URL && !process.env.FRONTEND_URL.includes('localhost')
-        ? process.env.FRONTEND_URL
-        : 'https://wedding-carol-vitor.vercel.app'
-      : frontendUrl;
+    const successUrl = `${frontendUrl}/sucesso`;
+    const failureUrl = `${frontendUrl}/falha`;
+    const pendingUrl = `${frontendUrl}/pendente`;
 
-    const successUrl = `${publicFrontendUrl}/sucesso`;
-    const failureUrl = `${publicFrontendUrl}/falha`;
-    const pendingUrl = `${publicFrontendUrl}/pendente`;
-
-    console.log('FRONTEND_URL detectada:', frontendUrl);
     console.log('URLs de retorno enviadas ao Mercado Pago:', { successUrl, failureUrl, pendingUrl });
 
     const preference = await new Preference(client).create({
@@ -84,7 +74,7 @@ app.post('/api/create-preference', async (req, res) => {
           failure: failureUrl,
           pending: pendingUrl,
         },
-        auto_return: 'approved',
+        // auto_return omitido: exige domínio https real e alcançável, senão a API do Mercado Pago rejeita a preferência
       },
     });
 

@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch api/index.ts",
-    "start": "tsx api/index.ts",
-    "build": "tsc"
+    "start": "tsx api/index.ts"
   },
   "dependencies": {
     "cors": "^2.8.6",

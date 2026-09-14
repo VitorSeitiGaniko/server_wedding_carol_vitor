@@ -50,7 +50,7 @@ app.post('/api/create-preference', async (req, res) => {
 
   try {
     const client = new MercadoPagoConfig({ accessToken });
-    
+
     // Obtém a URL do frontend
     let frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
 
@@ -66,19 +66,27 @@ app.post('/api/create-preference', async (req, res) => {
     const failureUrl = `${frontendUrl}/falha`;
     const pendingUrl = `${frontendUrl}/pendente`;
 
+    console.log('FRONTEND_URL em uso:', frontendUrl);
     console.log('URLs de retorno configuradas:', { successUrl, failureUrl, pendingUrl });
 
-    const preference = await new Preference(client).create({
-      body: {
-        items,
-        back_urls: {
-          success: successUrl,
-          failure: failureUrl,
-          pending: pendingUrl,
-        },
-        // O Mercado Pago exige que back_urls.success seja HTTPS válida para ativar auto_return
-        auto_return: successUrl.startsWith('https://') ? 'approved' : undefined,
+    // Monta o corpo da preferência
+    const preferenceBody: Record<string, any> = {
+      items,
+      back_urls: {
+        success: successUrl,
+        failure: failureUrl,
+        pending: pendingUrl,
       },
+    };
+
+    // O Mercado Pago só aceita auto_return se successUrl for uma URL HTTPS válida e não-placeholder
+    const isValidHttps = successUrl.startsWith('https://') && !successUrl.includes('meu-frontend.vercel.app');
+    if (isValidHttps) {
+      preferenceBody.auto_return = 'approved';
+    }
+
+    const preference = await new Preference(client).create({
+      body: preferenceBody,
     });
 
     return res.json({

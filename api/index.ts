@@ -50,17 +50,34 @@ app.post('/api/create-preference', async (req, res) => {
 
   try {
     const client = new MercadoPagoConfig({ accessToken });
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    
+    // Obtém a URL do frontend
+    let frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+    // Se não tiver protocolo, força https://
+    if (!frontendUrl.startsWith('http://') && !frontendUrl.startsWith('https://')) {
+      frontendUrl = `https://${frontendUrl}`;
+    }
+
+    // Remove barra no final, se houver
+    frontendUrl = frontendUrl.replace(/\/$/, '');
+
+    const successUrl = `${frontendUrl}/sucesso`;
+    const failureUrl = `${frontendUrl}/falha`;
+    const pendingUrl = `${frontendUrl}/pendente`;
+
+    console.log('URLs de retorno configuradas:', { successUrl, failureUrl, pendingUrl });
 
     const preference = await new Preference(client).create({
       body: {
         items,
         back_urls: {
-          success: `${frontendUrl}/sucesso`,
-          failure: `${frontendUrl}/falha`,
-          pending: `${frontendUrl}/pendente`,
+          success: successUrl,
+          failure: failureUrl,
+          pending: pendingUrl,
         },
-        auto_return: 'approved',
+        // O Mercado Pago exige que back_urls.success seja HTTPS válida para ativar auto_return
+        auto_return: successUrl.startsWith('https://') ? 'approved' : undefined,
       },
     });
 

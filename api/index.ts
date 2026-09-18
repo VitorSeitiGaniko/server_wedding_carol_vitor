@@ -59,9 +59,9 @@ app.post('/api/create-preference', async (req, res) => {
       body: {
         items,
         back_urls: {
-          success: `${frontendUrl}/sucesso`,
-          failure: `${frontendUrl}/falha`,
-          pending: `${frontendUrl}/pendente`,
+          success: `${frontendUrl}/success`,
+          failure: `${frontendUrl}/failure`,
+          pending: `${frontendUrl}/pending`,
         },
         auto_return: 'approved', // omitido: exige domínio https real e alcançável, senão a API do Mercado Pago rejeita a preferência
       },
